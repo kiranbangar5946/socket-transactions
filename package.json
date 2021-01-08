@@ -1,10 +1,10 @@
 {
-  "name": "mongochat",
+  "name": "simplechat",
   "version": "1.0.0",
   "description": "Simple chat app using sockets",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "nodemon server.js"
   },
   "author": "",
   "license": "ISC",

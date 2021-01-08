@@ -11,7 +11,7 @@ mongo.connect('mongodb://127.0.0.1/simplechat', (err, db) => {
 
     // Connect to Socket.io
     client.on('connection', (socket) => {
-        let chat = db.collection('chats');
+        const chat = db.collection('chats');
 
         // Create function to send status
         sendStatus = (s) => {
@@ -19,42 +19,41 @@ mongo.connect('mongodb://127.0.0.1/simplechat', (err, db) => {
         }
 
         // Get chats from mongo collection
-        chat.find().limit(50).sort({ _id: 1 }).toArray((err, res) => {
+        chat.find().limit(50).sort({ _id: 1 }).toArray((err, messages) => {
             if (err) {
                 throw err;
             }
 
             // Emit the messages
-            socket.emit('output', res);
+            socket.emit('output', messages);
         });
 
         // Handle input events
         socket.on('input', (data) => {
-            let name = data.name;
-            let message = data.message;
+            const { name, message } = data;
 
             // Check for name and message
             if (!name || !message) {
                 // Send error status
-                sendStatus('Please enter a name and message');
-            } else {
-                // Insert message
-                chat.insert({ name: name, message: message }, () => {
-                    client.emit('output', [data]);
-
-                    // Send status object
-                    sendStatus({
-                        message: 'Message sent',
-                        clear: true
-                    });
-                });
+                return sendStatus('Please enter a name and message');
             }
+            // Insert message
+            chat.insert({ name, message }, () => {
+                client.emit('output', [data]);
+
+                // Send status object
+                sendStatus({
+                    message: 'Message sent',
+                    clear: true
+                });
+            });
+
         });
 
         // Handle clear
         socket.on('clear', (data) => {
             // Remove all chats from collection
-            chat.delete({}, () => {
+            chat.remove({}, () => {
                 // Emit cleared
                 socket.emit('cleared');
             });
