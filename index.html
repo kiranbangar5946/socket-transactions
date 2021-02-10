@@ -1,63 +1,82 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
-    <title>SimpleChat</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css"
+        integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+    <title>My Bank</title>
     <style>
-        #messages{height:300px;}
+        #messages {
+            height: 300px;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="row">
             <div class="col-md-6 offset-md-3 col-sm-12">
                 <h1 class="text-center">
-                    SimpleChat 
+                    My Bank
                     <button id="clear" class="btn btn-danger">Clear</button>
+                    <button id="checkBalance" class="btn btn-danger">Check Balance</button>
                 </h1>
                 <div id="status"></div>
-                <div id="chat">
-                    <input type="text" id="username" class="form-control" placeholder="Enter name...">
+                <div>
+                    <div>
+                        <h6>Enter username</h6>
+                        <input type="text" id="username" class="form-control" placeholder="Enter name...">
+                    </div>
+                    <br>
+                    <div>
+                        <h6>Deposit</h6>
+                        <input type="number" id="deposit" class="form-control" placeholder="Enter amount...">
+                    </div>
+                    <br>
+                    <div>
+                        <h6>Withdraw</h6>
+                        <input type="number" id="withdraw" class="form-control" placeholder="Enter amount...">
+                    </div>
                     <br>
                     <div class="card">
                         <div id="messages" class="card-block">
 
                         </div>
                     </div>
-                    <br>
-                    <textarea id="textarea" class="form-control" placeholder="Enter message..."></textarea>
                 </div>
             </div>
         </div>
     </div>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
-
     <script>
-        (()=>{
-            const element = (id)=>{
+        (() => {
+            const element = (id) => {
                 return document.getElementById(id);
             }
 
             // Get Elements
             const status = element('status');
             const messages = element('messages');
-            const textarea = element('textarea');
+            // const textarea = element('textarea');
             const username = element('username');
             const clearBtn = element('clear');
+
+            const checkBalance = element('checkBalance')
+            const deposit = element('deposit');
+            const withdraw = element('withdraw');
 
             // Set default status
             const statusDefault = status.textContent;
 
-            const setStatus = (s)=>{
+            const setStatus = (s) => {
                 // Set status
                 status.textContent = s;
 
-                if(s !== statusDefault){
-                    var delay = setTimeout(()=>{
+                if (s !== statusDefault) {
+                    var delay = setTimeout(() => {
                         setStatus(statusDefault);
                     }, 4000);
                 }
@@ -67,60 +86,111 @@
             const socket = io.connect('http://127.0.0.1:4000');
 
             // Check for connection
-            if(socket !== undefined){
-                console.log('Connected to socket...');
+            if (socket !== undefined) {
 
-                // Handle Output
-                socket.on('output', (data)=>{
-                    //console.log(data);
-                    if(data.length){
-                        for(var x = 0;x < data.length;x++){
-                            // Build out message div
-                            var message = document.createElement('div');
-                            message.setAttribute('class', 'chat-message');
-                            message.textContent = data[x].name+": "+data[x].message;
-                            messages.appendChild(message);
-                            messages.insertBefore(message, messages.firstChild);
+                // Handle Logic
+                socket.on('output', (data) => {
+                    if (data && data.login) {
+                        messages.textContent = ''
+                        var message = document.createElement('div');
+                        message.setAttribute('class', 'bank-message');
+                        message.textContent = `welcome ${data.name}! Logged in successfully `;
+                        messages.insertBefore(message, messages.firstChild);
+                    }
+                    if (data && data.check_balance) {
+                        var message = document.createElement('div');
+                        message.setAttribute('class', 'bank-message');
+                        message.textContent = data.name ? `${data.name} your current balance is ${data.balance}` : 'No wallet found,Please register for bank account :(';
+                        messages.insertBefore(message, messages.firstChild);
+                    }
+                    if (data && data.deposit) {
+                        var message = document.createElement('div');
+                        message.setAttribute('class', 'bank-message');
+                        if (!data.wallet) {
+                            message.textContent = data.message
+                        } else {
+                            message.textContent = `Amount deposited! your current balance is ${data.balance}`;
                         }
+                        messages.insertBefore(message, messages.firstChild);
+                    }
+                    if (data && data.withdraw) {
+                        var message = document.createElement('div');
+                        message.setAttribute('class', 'bank-message');
+                        if (!data.wallet) {
+                            message.textContent = data.message
+                        } else {
+                            message.textContent = `Amount withdrawal successfull! your current balance is ${data.balance}`;
+                        }
+                        messages.insertBefore(message, messages.firstChild);
                     }
                 });
 
                 // Get Status From Server
-                socket.on('status', (data)=>{
+                socket.on('status', (data) => {
                     // get message status
-                    setStatus((typeof data === 'object')? data.message : data);
+                    setStatus((typeof data === 'object') ? data.message : data);
 
-                    // If status is clear, clear text
-                    if(data.clear){
-                        textarea.value = '';
-                    }
                 });
 
                 // Handle Input
-                textarea.addEventListener('keydown', (event)=>{
-                    if(event.which === 13 && event.shiftKey == false){
+                username.addEventListener('keydown', (event) => {
+                    if (event.which === 13 && event.shiftKey == false) {
                         // Emit to server input
                         socket.emit('input', {
-                            name:username.value,
-                            message:textarea.value
+                            name: username.value
                         });
 
                         event.preventDefault();
                     }
                 })
 
-                // Handle Chat Clear
-                clearBtn.addEventListener('click', ()=>{
+                // Handle balance check
+                checkBalance.addEventListener('click', () => {
+                    socket.emit('check_balance', username.value);
+                });
+
+                // Handle Deposit
+                deposit.addEventListener('keydown', (event) => {
+                    if (event.which === 13 && event.shiftKey == false) {
+                        // Emit to server input
+                        socket.emit('deposit', {
+                            name: username.value,
+                            amount: Number(deposit.value)
+                        });
+
+                        event.preventDefault();
+                    }
+                })
+
+                // Handle Withdraw
+                withdraw.addEventListener('keydown', (event) => {
+                    if (event.which === 13 && event.shiftKey == false) {
+                        // Emit to server input
+                        socket.emit('withdraw', {
+                            name: username.value,
+                            amount: Number(withdraw.value)
+                        });
+
+                        event.preventDefault();
+                    }
+                })
+
+                // Handle Clear
+                clearBtn.addEventListener('click', () => {
                     socket.emit('clear');
                 });
 
                 // Clear Message
-                socket.on('cleared', ()=>{
+                socket.on('cleared', () => {
                     messages.textContent = '';
+                    username.value = '';
+                    deposit.value = '';
+                    withdraw.value = '';
                 });
             }
 
         })();
     </script>
 </body>
+
 </html>

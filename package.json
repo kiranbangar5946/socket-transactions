@@ -1,7 +1,7 @@
 {
-  "name": "simplechat",
+  "name": "bankapp",
   "version": "1.0.0",
-  "description": "Simple chat app using sockets",
+  "description": "Simple Bank app using sockets",
   "main": "server.js",
   "scripts": {
     "start": "nodemon server.js"
