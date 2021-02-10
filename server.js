@@ -52,7 +52,6 @@ client.on('connection', (socket) => {
     // Handle check balance
     socket.on('check_balance', (user) => {
         const userData = users.find(u => u.name === user)
-        console.log('userData', userData)
         socket.emit('output', { ...userData, check_balance: true });
     });
 
@@ -63,7 +62,7 @@ client.on('connection', (socket) => {
             return socket.emit('output', { message: 'You dont have wallet to deposit:(', deposit: true, wallet: false });
         }
         users[index].balance = users[index].balance + depositRequest.amount
-        return socket.emit('output', { balance: users[index].balance, deposit: true });
+        return socket.emit('output', { balance: users[index].balance, deposit: true, wallet: true });
     });
 
     // Handle withdraw
@@ -73,9 +72,9 @@ client.on('connection', (socket) => {
             return socket.emit('output', { message: 'You dont have wallet to withdraw :(', withdraw: true, wallet: false });
         }
         if (users[index].balance < withdrawRequest.amount) {
-            return socket.emit('output', { message: 'Insufficient funds', withdraw: true });
+            return socket.emit('output', { message: 'Insufficient funds', withdraw: true, wallet: true });
         }
         users[index].balance = users[index].balance - withdrawRequest.amount
-        return socket.emit('output', { balance: users[index].balance, withdraw: true });
+        return socket.emit('output', { balance: users[index].balance, withdraw: true, wallet: true });
     });
 });
